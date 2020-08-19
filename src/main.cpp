@@ -5,22 +5,33 @@
 
 /*Creando a la clase de la entidad*/
 class snake : public EGE::CORE::Entity<snake>{
+    private:
+        char direction = 'd';
     public:
         snake(EGE::CORE::EntityId id): Entity(id){};
+
+        void setDirection(char direction){
+            this -> direction = direction;
+        }
+
+        char getDirection(){
+            return this -> direction;
+        }
 };
+
+
 
 /*Creando al manager de la entidad snake*/
 class mSnake : public EGE::STD::TERMINAL::WINDOWS::mSprite<snake>{
-    public:
-        std::vector<EGE::CORE::EntityId> ids;
+
 };
+
 
 class systemCreateSnake{
     public:
         
         void snakeHead(mSnake *snake){
             EGE::CORE::EntityId id = snake -> addEntity();
-            snake -> ids.push_back(id);
             snake -> spriteInitializer(id,1,"snakeHead");
             snake -> positionInitializer(id,5,5);
         }
@@ -28,7 +39,6 @@ class systemCreateSnake{
         void snakePiece(mSnake *snake){
             auto snakePieces = snake -> getEntities();
             EGE::CORE::EntityId id = snake -> addEntity();
-            snake -> ids.push_back(id);
             auto lastPieceId = id-1;
 
             auto lastPieceComponentPosition = snake -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(lastPieceId);
@@ -69,22 +79,27 @@ class systemSnakeInitializer{
         }
 };
 
-class pixel{
+class point{
     public:
-    pixel(int x,int y){this ->x = x;this -> y = y;};
+        point(int x,int y, char c){
+            
+        }
         int x;
         int y;
+        char c;
 };
+
 
 class systemMoveSnake{
     private:
         EGE::STD::TERMINAL::WINDOWS::systemDisplacementEntity<mSnake> displacement;
         EGE::STD::TERMINAL::WINDOWS::systemPositionReset<mSnake> reset;
         systemViewSnake view;
+        std::vector<point> points;
         char keys[8] = {'w','W','a','A','s','S','d','D'};
     public:
 
-        void moveSnake(char key,mSnake *snake){
+        void moveSnake(char key,mSnake *manager){
 
             bool flag = false;
 
@@ -96,44 +111,14 @@ class systemMoveSnake{
             }
 
             if(flag){
+                auto snakeHead = manager -> getEntity<snake>(0);
+                snakeHead -> setDirection(key);
+                auto snakeHeadComponentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
+                auto snakeHeadposition = snakeHeadComponentPosition -> getFirstPosition();
+                this -> points.push_back(std::make_pair(std::get<0>(*snakeHeadposition),std::get<0>(*snakeHeadposition)),key);
 
-                /*Variables*/
-                EGE::STD::TERMINAL::WINDOWS::Position *snakePieceComponentPosition;
-                std::tuple<int,int> *snakePiecePosition;
-                pixel snakePiecePositionTuple(0,0);
-                pixel snakePiecePositionTupleTmp(0,0);
-
-                /*Borramos a la vieja snake*/
-                this -> view.viewSnake(snake,false);
-
-                /*Guardamos la vieja posición de la cabeza*/
-                snakePieceComponentPosition = snake -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
-                snakePiecePosition = snakePieceComponentPosition -> getFirstPosition();
-                snakePiecePositionTuple.x = std::get<0>(*snakePiecePosition);
-                snakePiecePositionTuple.y = std::get<1>(*snakePiecePosition);
-
-                /*Actualizamos a la cabeza*/
-                this -> displacement.update(key,0,snake,WASD);
-
-
-                for(size_t i = 1; i< snake -> ids.size(); i++){
-
-                    snakePieceComponentPosition = snake -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(i);
-                    snakePiecePosition = snakePieceComponentPosition -> getFirstPosition();
-                    snakePiecePositionTupleTmp.x = std::get<0>(*snakePiecePosition);
-                    snakePiecePositionTupleTmp.y = std::get<1>(*snakePiecePosition);
-                    this -> reset.positionResetSprite(i,snake,snakePiecePositionTuple.x,snakePiecePositionTuple.y);
-                    snakePiecePositionTuple.x = snakePiecePositionTupleTmp.x;
-                    snakePiecePositionTuple.y = snakePiecePositionTupleTmp.y;
-
-
-                }
-                
-                this -> view.viewSnake(snake);
             }
-
         }
-
 };
 
 
@@ -171,6 +156,7 @@ int main(){
             control.moveSnake(tecla,&snake);
         }
     }
+
 
     
 }
