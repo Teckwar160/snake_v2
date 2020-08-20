@@ -35,6 +35,7 @@ namespace EGE::STD::TERMINAL::WINDOWS{
             view.view(id,gameContext,false);
             move.update(key,id,gameContext);
             isCollition = collition.update(id,gameContext);
+            
             if(isCollition){
                 move.update(inverter.update(key,control),id,gameContext);
             }
