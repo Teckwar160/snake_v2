@@ -29,6 +29,16 @@ class mSnakePiece : public EGE::STD::TERMINAL::WINDOWS::mSprite<snakePiece>{
 
 };
 
+/*Score*/
+class score : public EGE::CORE::Entity<score>{
+    public:
+        score(EGE::CORE::EntityId id) : Entity(id){};
+};
+
+class mScore :public EGE::STD::TERMINAL::WINDOWS::mSprite<score>{
+
+}; 
+
 
 class systemCreateSnakePiece{
     public:
@@ -145,7 +155,7 @@ class systemMoveSnake{
         char keys[8] = {'w','W','a','A','s','S','d','D'};
     public:
 
-        void moveSnake(char key,mSnakePiece *manager){
+        void moveSnake(char key,mSnakePiece *manager,bool adminMode = false,bool stopMove = false){
             view.viewSnake(manager,false);
             bool flag = false;
 
@@ -160,7 +170,7 @@ class systemMoveSnake{
                 auto snakeHead = manager -> getEntity<snakePiece>(0);
 
                 /*Verificamos que no sea el contrario*/
-                if(this -> inverter.update(snakeHead ->getDirection(),WASD) != key){
+                if(this -> inverter.update(snakeHead ->getDirection(),WASD) != key || adminMode){
                     snakeHead -> setDirection(key);
                     auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
                     auto position = componentPosition -> getFirstPosition();
@@ -178,7 +188,14 @@ class systemMoveSnake{
                 auto position = componentPosition -> getFirstPosition();
 
                 if(i == 0){
-                    isMove = this -> displacement.update(piece -> getDirection(),i,manager,WASD);
+                    
+
+                    if(stopMove){
+                        isMove = true;
+                    }else{
+                        isMove = this -> displacement.update(piece -> getDirection(),i,manager,WASD);
+                    }
+
                 }else if(!isMove){
 
                     
@@ -205,7 +222,41 @@ class systemMoveSnake{
                     this -> move.update(piece -> getDirection(),i,manager);
                 }
             }
-            view.viewSnake(manager);
+        }
+};
+
+class systemResetPositionSnake{
+    private:
+        EGE::STD::TERMINAL::WINDOWS::systemDisplacementEntity<mSnakePiece> displacement;
+        EGE::STD::TERMINAL::WINDOWS::systemKeyInverter inverter;
+    public:
+        void reset(mSnakePiece *manager){
+
+            for(auto i: manager -> ids){
+                auto piece = manager -> getEntity<snakePiece>(i);
+
+                this -> displacement.update(this -> inverter.update(piece ->getDirection(),WASD),i,manager,WASD);
+                this -> displacement.update(this -> inverter.update(piece ->getDirection(),WASD),i,manager,WASD);
+            }
+
+        }
+};
+
+class systemLimitScore{
+    public:
+        bool isLimit(mSnakePiece *manager){
+
+            auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
+            auto position = componentPosition -> getFirstPosition();
+            auto piece = manager -> getEntity<snakePiece>(0);
+
+            if(std::get<1>(*position) == 17){
+                if(piece -> getDirection() == 's' || piece -> getDirection() == 'S'){
+                    return true;
+                }    
+            }                   
+
+            return false;
         }
 };
 
@@ -214,11 +265,16 @@ int main(){
 
     /*Inicalizaciones antes de ljuego*/
     mSnakePiece snake;
+    mScore scoreSnake;
     bool gameOver = false;
     char tecla = 0;
     EGE::STD::TERMINAL::WINDOWS::mTerminal tablero;
 
     EGE::CORE::EntityId tableroId = tablero.addEntity(20,20);
+    auto scoreOfSnake = scoreSnake.addEntity();
+
+    scoreSnake.spriteInitializer(scoreOfSnake,19,"score");
+    scoreSnake.positionInitializer(scoreOfSnake,1,1);
 
     tablero.terminalSetColor(tableroId,240);
     tablero.terminalPersonalized(tableroId);
@@ -227,11 +283,18 @@ int main(){
     systemSnakeInitializer init;
     systemViewSnake view;
     EGE::STD::TERMINAL::WINDOWS::systemInput entrada;
+    EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mScore> viewScore;
+    EGE::STD::TERMINAL::WINDOWS::systemScore<mScore> scoreNum;
+
+    scoreNum.scoreInitializer(scoreOfSnake,&scoreSnake);
     init.initializer(&snake);
     view.viewSnake(&snake);
+    viewScore.viewColor(scoreOfSnake,&scoreSnake,240);
+
 
     /*Controles*/
     systemMoveSnake control;
+    systemLimitScore limit;
 
     while(!gameOver){
         tecla = entrada.update();
@@ -241,7 +304,17 @@ int main(){
         }
 
 
-        control.moveSnake(tecla,&snake);
+        if(limit.isLimit(&snake)){
+            control.moveSnake(tecla,&snake,false,true);
+            if(tecla != 's' && tecla != 'S' && tecla != 0){
+                control.moveSnake(tecla,&snake,true);
+            }
+        }else{
+            control.moveSnake(tecla,&snake);
+        }
+
+        view.viewSnake(&snake);
+
         Sleep(100);
     }
 
