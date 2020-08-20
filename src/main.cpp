@@ -5,11 +5,11 @@
 
 
 /*Creando a la clase de la entidad*/
-class snake : public EGE::CORE::Entity<snake>{
+class snakePiece : public EGE::CORE::Entity<snakePiece>{
     private:
         char direction = 'd';
     public:
-        snake(EGE::CORE::EntityId id): Entity(id){};
+        snakePiece(EGE::CORE::EntityId id): Entity(id){};
 
         void setDirection(char direction){
             this -> direction = direction;
@@ -23,24 +23,24 @@ class snake : public EGE::CORE::Entity<snake>{
 
 
 /*Creando al manager de la entidad snake*/
-class mSnake : public EGE::STD::TERMINAL::WINDOWS::mSprite<snake>{
+class mSnakePiece : public EGE::STD::TERMINAL::WINDOWS::mSprite<snakePiece>{
     public:
         std::vector<EGE::CORE::EntityId> ids;
 
 };
 
 
-class systemCreateSnake{
+class systemCreateSnakePiece{
     public:
         
-        void snakeHead(mSnake *snake){
+        void snakeHead(mSnakePiece *snake){
             EGE::CORE::EntityId id = snake -> addEntity();
             snake -> spriteInitializer(id,1,"snakeHead");
             snake -> positionInitializer(id,5,5);
             snake -> ids.push_back(id);
         }
 
-        void snakePiece(mSnake *snake){
+        void snakePiece(mSnakePiece *snake){
             auto snakePieces = snake -> getEntities();
             EGE::CORE::EntityId id = snake -> addEntity();
             auto lastPieceId = id-1;
@@ -58,10 +58,10 @@ class systemCreateSnake{
 class systemViewSnake{
 
     private:
-        EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mSnake> view;
+        EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mSnakePiece> view;
 
     public:
-        void viewSnake(mSnake *snake,bool view = true){
+        void viewSnake(mSnakePiece *snake,bool view = true){
             
             auto snakePieces = snake -> getEntities();
 
@@ -73,9 +73,9 @@ class systemViewSnake{
 
 class systemSnakeInitializer{
     private:
-        systemCreateSnake create;
+        systemCreateSnakePiece create;
     public:
-        void initializer(mSnake *snake){
+        void initializer(mSnakePiece *snake){
             this -> create.snakeHead(snake);
             this -> create.snakePiece(snake);
             this -> create.snakePiece(snake);
@@ -136,16 +136,16 @@ class point{
 
 class systemMoveSnake{
     private:
-        EGE::STD::TERMINAL::WINDOWS::systemDisplacementEntity<mSnake> displacement;
-        EGE::STD::TERMINAL::WINDOWS::moveEntity<mSnake> move;
-        EGE::STD::TERMINAL::WINDOWS::systemPositionReset<mSnake> reset;
+        EGE::STD::TERMINAL::WINDOWS::systemDisplacementEntity<mSnakePiece> displacement;
+        EGE::STD::TERMINAL::WINDOWS::moveEntity<mSnakePiece> move;
+        EGE::STD::TERMINAL::WINDOWS::systemPositionReset<mSnakePiece> reset;
         EGE::STD::TERMINAL::WINDOWS::systemKeyInverter inverter;
         systemViewSnake view;
         std::vector<point*> points;
         char keys[8] = {'w','W','a','A','s','S','d','D'};
     public:
 
-        void moveSnake(char key,mSnake *manager){
+        void moveSnake(char key,mSnakePiece *manager){
             view.viewSnake(manager,false);
             bool flag = false;
 
@@ -157,7 +157,7 @@ class systemMoveSnake{
             }
 
             if(flag){
-                auto snakeHead = manager -> getEntity<snake>(0);
+                auto snakeHead = manager -> getEntity<snakePiece>(0);
 
                 /*Verificamos que no sea el contrario*/
                 if(this -> inverter.update(snakeHead ->getDirection(),WASD) != key){
@@ -173,7 +173,7 @@ class systemMoveSnake{
             bool isMove;
 
             for(auto i: manager -> ids){
-                auto piece = manager -> getEntity<snake>(i);
+                auto piece = manager -> getEntity<snakePiece>(i);
                 auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(i);
                 auto position = componentPosition -> getFirstPosition();
 
@@ -213,7 +213,7 @@ class systemMoveSnake{
 int main(){
 
     /*Inicalizaciones antes de ljuego*/
-    mSnake snake;
+    mSnakePiece snake;
     bool gameOver = false;
     char tecla = 0;
     EGE::STD::TERMINAL::WINDOWS::mTerminal tablero;
