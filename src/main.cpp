@@ -139,6 +139,7 @@ class systemMoveSnake{
         EGE::STD::TERMINAL::WINDOWS::systemDisplacementEntity<mSnake> displacement;
         EGE::STD::TERMINAL::WINDOWS::moveEntity<mSnake> move;
         EGE::STD::TERMINAL::WINDOWS::systemPositionReset<mSnake> reset;
+        EGE::STD::TERMINAL::WINDOWS::systemKeyInverter inverter;
         systemViewSnake view;
         std::vector<point*> points;
         char keys[8] = {'w','W','a','A','s','S','d','D'};
@@ -157,12 +158,15 @@ class systemMoveSnake{
 
             if(flag){
                 auto snakeHead = manager -> getEntity<snake>(0);
-                snakeHead -> setDirection(key);
 
-                auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
-                auto position = componentPosition -> getFirstPosition();
+                /*Verificamos que no sea el contrario*/
+                if(this -> inverter.update(snakeHead ->getDirection(),WASD) != key){
+                    snakeHead -> setDirection(key);
+                    auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
+                    auto position = componentPosition -> getFirstPosition();
 
-                this ->points.push_back(new point(std::get<0>(*position),std::get<1>(*position),key));
+                    this ->points.push_back(new point(std::get<0>(*position),std::get<1>(*position),key));
+                }
             }
 
 
