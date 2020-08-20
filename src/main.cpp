@@ -7,7 +7,7 @@
 /*Creando a la clase de la entidad*/
 class snake : public EGE::CORE::Entity<snake>{
     private:
-        char direction = 's';
+        char direction = 'd';
     public:
         snake(EGE::CORE::EntityId id): Entity(id){};
 
@@ -78,9 +78,8 @@ class systemSnakeInitializer{
         void initializer(mSnake *snake){
             this -> create.snakeHead(snake);
             this -> create.snakePiece(snake);
-            //this -> create.snakePiece(snake);
-            //this -> create.snakePiece(snake);
-            //this -> create.snakePiece(snake);
+            this -> create.snakePiece(snake);
+            this -> create.snakePiece(snake);
         }
 };
 
@@ -89,7 +88,7 @@ class point{
         int x;
         int y;
         char direction;
-        size_t lifeCounter = 0;
+        int lifeCounter = 0;
     public:
         point(int x,int y, char direction){
             this -> x =x;
@@ -126,7 +125,7 @@ class point{
             return this -> direction;
         }
 
-        size_t getLifeCounter(){
+        int getLifeCounter(){
             return this ->lifeCounter;
         }
 
@@ -141,7 +140,7 @@ class systemMoveSnake{
         EGE::STD::TERMINAL::WINDOWS::moveEntity<mSnake> move;
         EGE::STD::TERMINAL::WINDOWS::systemPositionReset<mSnake> reset;
         systemViewSnake view;
-        std::vector<point> points;
+        std::vector<point*> points;
         char keys[8] = {'w','W','a','A','s','S','d','D'};
     public:
 
@@ -157,70 +156,50 @@ class systemMoveSnake{
             }
 
             if(flag){
-                /*Obtenemos a la entidad de la cabeza*/
                 auto snakeHead = manager -> getEntity<snake>(0);
-
-                /*Accinamos su dirección*/
                 snakeHead -> setDirection(key);
 
-                /*Obtenemos su posicion*/
-                auto snakeHeadComponentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
-                auto snakeHeadposition = snakeHeadComponentPosition -> getFirstPosition();
+                auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(0);
+                auto position = componentPosition -> getFirstPosition();
 
-                /*Marcamos el punto critico*/
-                point criticalPoint(std::get<0>(*snakeHeadposition),std::get<0>(*snakeHeadposition),key);
-                this -> points.push_back(criticalPoint);
+                this ->points.push_back(new point(std::get<0>(*position),std::get<1>(*position),key));
             }
 
-            /*Actualizamos a las entidades de la serpiente*/
-            auto snakePieces = manager -> getEntities();
+
+            bool isMove;
 
             for(auto i: manager -> ids){
-                if(i != 0){
+                auto piece = manager -> getEntity<snake>(i);
+                auto componentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(i);
+                auto position = componentPosition -> getFirstPosition();
 
-                    /*Obtenemos la posición de la pieza*/
-                    auto pieceComponentPosition = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(i);
-                    auto piecePosition = pieceComponentPosition -> getFirstPosition();
-                    auto piece = manager -> getEntity<snake>(i);
+                if(i == 0){
+                    isMove = this -> displacement.update(piece -> getDirection(),i,manager,WASD);
+                }else if(!isMove){
 
-                    /*vector temporal*/
-                    std::vector<point> tmp;
-
+                    
                     for(auto j: this ->points){
-                        /*Vemos si la entidad esta en un punto critico*/
-                        std::cout << "j.x: " << j.getX() << " p: " << std::get<0>(*piecePosition);
-                        if(std::get<1>(*piecePosition) == j.getY()){
-                            if(std::get<0>(*piecePosition) == j.getX()){
-                                
-                                /*Actualizamos su dirección*/
-                                piece -> setDirection(j.getDirection());
-                                
-                                /*Incrementamos el contador del punto critico*/
-                                j.increaseLifeCounter();
+                        if(j ->getY() == std::get<1>(*position)){
+                            if(j ->getX() == std::get<0>(*position)){
+                                piece -> setDirection(j ->getDirection());
+
+                                j ->increaseLifeCounter();
                             }
                         }
-                        tmp.push_back(j);
                     }
-                    auto p = manager -> getEntity<snake>(i);
-                    std::cout <<"Direccion: "<< p -> getDirection() << std::endl;
-                    
-                    this ->points.swap(tmp);
 
-                     /*Vemos si continua vivo*/
-                    for(auto k = this ->points.begin(); k!= this -> points.end(); k++){
-                        if(k ->getLifeCounter() == snakePieces.size()-1){
-                            this -> points.erase(k);
+                    auto snakePieces = manager -> getNumEntities();
+                    for(auto it = this -> points.begin(); it != this -> points.end();){
+                        if((*it) -> getLifeCounter() == snakePieces-1){
+                            it = this -> points.erase(it);
+                        }else{
+                            ++it;
                         }
-                     }
+                    }
 
-
-                    this -> displacement.update(piece ->getDirection(),i,manager,WASD);
-                }else{
-                    auto piece = manager -> getEntity<snake>(i);
-                    this ->displacement.update(piece ->getDirection(),i,manager,WASD);
+                    this -> move.update(piece -> getDirection(),i,manager);
                 }
             }
-
             view.viewSnake(manager);
         }
 };
@@ -258,7 +237,7 @@ int main(){
 
 
         control.moveSnake(tecla,&snake);
-        Sleep(300);
+        Sleep(100);
     }
 
 

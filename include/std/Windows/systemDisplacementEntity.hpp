@@ -27,7 +27,7 @@ namespace EGE::STD::TERMINAL::WINDOWS{
              * @param gameContext Manager de la entidad en cuestión.
              * @param control Sistema de teclas que se usara para mover a la entidad.
              */
-            void update(char key,EGE::CORE::EntityId id,mType *gameContext,EGE::CORE::ControlType control);
+            bool update(char key,EGE::CORE::EntityId id,mType *gameContext,EGE::CORE::ControlType control);
     };
 }
 #endif
