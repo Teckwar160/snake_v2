@@ -195,6 +195,7 @@ class systemMoveSnake{
                     auto snakePieces = manager -> getNumEntities();
                     for(auto it = this -> points.begin(); it != this -> points.end();){
                         if((*it) -> getLifeCounter() == snakePieces-1){
+                            delete *it;
                             it = this -> points.erase(it);
                         }else{
                             ++it;
