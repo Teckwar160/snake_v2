@@ -1,6 +1,6 @@
 #include <iostream>
 #include <core/Core.hpp>
-#include <std/Windows/WindowsSTD.hpp>
+#include <std/Windows/Others/WindowsSTD.hpp>
 #include <queue>
 
 
@@ -147,7 +147,7 @@ class point{
 class systemMoveSnake{
     private:
         EGE::STD::TERMINAL::WINDOWS::systemDisplacementEntity<mSnakePiece> displacement;
-        EGE::STD::TERMINAL::WINDOWS::moveEntity<mSnakePiece> move;
+        EGE::STD::TERMINAL::WINDOWS::systemMoveEntity<mSnakePiece> move;
         EGE::STD::TERMINAL::WINDOWS::systemPositionReset<mSnakePiece> reset;
         EGE::STD::TERMINAL::WINDOWS::systemKeyInverter inverter;
         systemViewSnake view;

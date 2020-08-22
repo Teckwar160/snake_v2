@@ -1,7 +1,7 @@
-#ifndef SYSTEMSPRITE_TPP
-#define SYSTEMSPRITE_TPP
+#ifndef SYSTEMSCORE_TPP
+#define SYSTEMSCORE_TPP
 
-#include <std/Windows/systemScore.hpp>
+#include <std/Windows/Systems/systemScore.hpp>
 
 namespace EGE::STD::TERMINAL::WINDOWS{
     template<typename mType>
@@ -57,6 +57,11 @@ namespace EGE::STD::TERMINAL::WINDOWS{
 
         board -> editSprite(spriteBoard);
     }
+
+    template<typename mType>
+    int systemScore<mType>::getPoints(){
+        return this -> points;
+    } 
 }
 
 #endif
