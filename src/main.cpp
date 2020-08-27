@@ -6,6 +6,8 @@
 #include <time.h>
 #include <iostream>
 
+const int winPoints =20;
+
 
 /*Creando a la clase de la entidad*/
 class snakePiece : public EGE::CORE::Entity<snakePiece>{
@@ -41,6 +43,15 @@ class score : public EGE::CORE::Entity<score>{
 class mScore :public EGE::STD::TERMINAL::WINDOWS::mSprite<score>{
 
 }; 
+
+class gameOverBoard: public EGE::CORE::Entity<gameOverBoard>{
+    public:
+        gameOverBoard(EGE::CORE::EntityId id) : Entity(id){};
+};
+
+class mGameOverBoard : public EGE::STD::TERMINAL::WINDOWS::mSprite<gameOverBoard>{
+
+};
 
 /*Comida*/
 class food : public EGE::CORE::Entity<food>{
@@ -310,9 +321,6 @@ class systemGeneratorFood{
 };
 
 int main(){
-
-
-
     /*Inicalizaciones antes de ljuego*/
     mSnakePiece snake;
     mScore scoreSnake;
@@ -363,6 +371,7 @@ int main(){
     while(!gameOver){
 
         viewFood.viewColor(0,&chef,249);
+        viewScore.viewColor(scoreOfSnake,&scoreSnake,240);
 
         tecla = entrada.update();
 
@@ -385,12 +394,31 @@ int main(){
         if(collitionFood.collition(0,&snake,&chef)){
             viewFood.viewColor(0,&chef,249,false);
             generator.resetFood(&chef);
+            scoreNum.update(10,0,&scoreSnake);
+        }
+
+        if(scoreNum.getPoints() >= winPoints){
+            gameOver = true;
         }
 
 
-        Sleep(100);
+        Sleep(80);
     }
 
+    system("cls");
+    tablero.terminalPersonalized(tableroId);
 
-    
+    /*Pantalla final*/
+    mGameOverBoard boardEnd;
+    EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mGameOverBoard> viewBoard;
+    auto board = boardEnd.addEntity();
+
+   if(scoreNum.getPoints() >= winPoints){
+        boardEnd.spriteInitializer(board,19,"winGame");
+    }else{
+      boardEnd.spriteInitializer(board,19,"exitGame");
+    }
+
+    boardEnd.positionInitializer(board,1,1);
+    viewBoard.viewColor(0,&boardEnd,249);
 }
