@@ -1,7 +1,10 @@
 #include <iostream>
 #include <core/Core.hpp>
 #include <std/Windows/Others/WindowsSTD.hpp>
-#include <queue>
+
+#include <stdlib.h>
+#include <time.h>
+#include <iostream>
 
 
 /*Creando a la clase de la entidad*/
@@ -39,7 +42,17 @@ class mScore :public EGE::STD::TERMINAL::WINDOWS::mSprite<score>{
 
 }; 
 
+/*Comida*/
+class food : public EGE::CORE::Entity<food>{
+    public:
+        food(EGE::CORE::EntityId id): Entity(id){};
+};
 
+class mFood : public EGE::STD::TERMINAL::WINDOWS::mSprite<food>{
+
+};
+
+/*Sistemas de la serpiente*/
 class systemCreateSnakePiece{
     public:
         
@@ -260,8 +273,45 @@ class systemLimitScore{
         }
 };
 
+/**/
+
+class systemGeneratorFood{
+    private:
+        EGE::CORE::EntityId idFood;
+
+        int randomNumber(char direction){
+            srand(time(NULL));
+
+            if(direction == 'x'){
+                return 1 +rand() %(20-1);
+
+            }else{
+                return 1 +rand() %(18-1);
+            }
+
+        }
+
+    public:
+        void foodInitializer(mFood *manager){
+            idFood = manager -> addEntity();
+
+            manager -> spriteInitializer(this -> idFood,1,"food");
+            manager -> positionInitializer(this -> idFood,this ->randomNumber('x'),this ->randomNumber('y'));
+        }
+
+        void resetFood(mFood *manager){
+            auto position = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(this -> idFood);
+            auto sprite = manager -> getComponent<EGE::STD::TERMINAL::WINDOWS::Sprite>(this -> idFood);
+
+            position -> positionResetSprite(sprite -> getSprite(),this ->randomNumber('x'),this ->randomNumber('y'));
+        }
+
+
+};
 
 int main(){
+
+
 
     /*Inicalizaciones antes de ljuego*/
     mSnakePiece snake;
@@ -286,6 +336,18 @@ int main(){
     EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mScore> viewScore;
     EGE::STD::TERMINAL::WINDOWS::systemScore<mScore> scoreNum;
 
+    /*Comida*/
+    mFood chef;
+
+    systemGeneratorFood generator;
+
+    generator.foodInitializer(&chef);
+
+    EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mFood> viewFood;
+    EGE::STD::TERMINAL::WINDOWS::systemGenericCollition<mSnakePiece,mFood> collitionFood;
+
+
+    /*Score*/
     scoreNum.scoreInitializer(scoreOfSnake,&scoreSnake);
     init.initializer(&snake);
     view.viewSnake(&snake);
@@ -296,7 +358,12 @@ int main(){
     systemMoveSnake control;
     systemLimitScore limit;
 
+
+
     while(!gameOver){
+
+        viewFood.viewColor(0,&chef,249);
+
         tecla = entrada.update();
 
         if(tecla == 'c'){
@@ -314,6 +381,12 @@ int main(){
         }
 
         view.viewSnake(&snake);
+
+        if(collitionFood.collition(0,&snake,&chef)){
+            viewFood.viewColor(0,&chef,249,false);
+            generator.resetFood(&chef);
+        }
+
 
         Sleep(100);
     }
