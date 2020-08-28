@@ -6,7 +6,7 @@
 #include <time.h>
 #include <iostream>
 
-const int winPoints =900;
+const int winPoints =10;
 
 
 /*Creando a la clase de la entidad*/
@@ -375,6 +375,9 @@ int main(){
     EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mFood> viewFood;
     EGE::STD::TERMINAL::WINDOWS::systemGenericCollition<mSnakePiece,mFood> collitionFood;
 
+    /*Muerte de choque*/
+    EGE::STD::TERMINAL::WINDOWS::systemGenericCollition<mSnakePiece,mSnakePiece> collionSnake;
+    EGE::CORE::EntityId idExcep;
 
     /*Score*/
     scoreNum.scoreInitializer(scoreOfSnake,&scoreSnake);
@@ -416,6 +419,12 @@ int main(){
             scoreNum.update(10,0,&scoreSnake);
             create.createSnakePiece(&snake);
             viewFood.viewColor(0,&chef,249,true);
+        }
+
+        if(collionSnake.collitionId(0,&snake,&snake,&idExcep)){
+            if(idExcep != 0){
+                gameOver = true;
+            }
         }
 
         if(scoreNum.getPoints() >= winPoints){
