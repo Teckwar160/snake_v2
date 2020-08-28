@@ -6,13 +6,13 @@
 #include <time.h>
 #include <iostream>
 
-const int winPoints =20;
+const int winPoints =900;
 
 
 /*Creando a la clase de la entidad*/
 class snakePiece : public EGE::CORE::Entity<snakePiece>{
     private:
-        char direction = 'd';
+        char direction;
     public:
         snakePiece(EGE::CORE::EntityId id): Entity(id){};
 
@@ -65,19 +65,25 @@ class mFood : public EGE::STD::TERMINAL::WINDOWS::mSprite<food>{
 
 /*Sistemas de la serpiente*/
 class systemCreateSnakePiece{
+    private:
+        EGE::STD::TERMINAL::WINDOWS::systemMoveEntity<mSnakePiece> move;
+        EGE::STD::TERMINAL::WINDOWS::systemKeyInverter inverter;
     public:
         
-        void snakeHead(mSnakePiece *snake){
+        void createSnakeHead(mSnakePiece *snake){
             EGE::CORE::EntityId id = snake -> addEntity();
             snake -> spriteInitializer(id,1,"snakeHead");
             snake -> positionInitializer(id,5,5);
             snake -> ids.push_back(id);
+
+            auto head = snake -> getEntity<snakePiece>(id);
+
+            head -> setDirection('d');
         }
 
-        void snakePiece(mSnakePiece *snake){
-            auto snakePieces = snake -> getEntities();
+        void createSnakePiece(mSnakePiece *snake){
+            auto lastPieceId = snake -> ids.size()-1;
             EGE::CORE::EntityId id = snake -> addEntity();
-            auto lastPieceId = id-1;
             snake -> ids.push_back(id);
 
             auto lastPieceComponentPosition = snake -> getComponent<EGE::STD::TERMINAL::WINDOWS::Position>(lastPieceId);
@@ -85,7 +91,21 @@ class systemCreateSnakePiece{
             auto lastPiecePosition = lastPieceComponentPosition -> getFirstPosition();
 
             snake -> spriteInitializer(id,1,"snakePiece");
-            snake -> positionInitializer(id,std::get<0>(*lastPiecePosition)-1,std::get<1>(*lastPiecePosition));
+
+            /*Le asignamos la dirección*/
+            auto lastPieceEntity = snake -> getEntity<snakePiece>(lastPieceId);
+
+            auto newLastPieceEntity = snake ->getEntity<snakePiece>(id);
+
+            newLastPieceEntity -> setDirection(lastPieceEntity -> getDirection());
+
+            snake -> positionInitializer(id,std::get<0>(*lastPiecePosition),std::get<1>(*lastPiecePosition));
+
+            this -> move.update(this -> inverter.update(newLastPieceEntity -> getDirection(),WASD),id,snake);
+
+
+
+
         }
 };
 
@@ -110,10 +130,10 @@ class systemSnakeInitializer{
         systemCreateSnakePiece create;
     public:
         void initializer(mSnakePiece *snake){
-            this -> create.snakeHead(snake);
-            this -> create.snakePiece(snake);
-            this -> create.snakePiece(snake);
-            this -> create.snakePiece(snake);
+            this -> create.createSnakeHead(snake);
+            this -> create.createSnakePiece(snake);
+            this -> create.createSnakePiece(snake);
+            this -> create.createSnakePiece(snake);
         }
 };
 
@@ -343,6 +363,7 @@ int main(){
     EGE::STD::TERMINAL::WINDOWS::systemInput entrada;
     EGE::STD::TERMINAL::WINDOWS::systemVisualizeEntity<mScore> viewScore;
     EGE::STD::TERMINAL::WINDOWS::systemScore<mScore> scoreNum;
+    systemCreateSnakePiece create;
 
     /*Comida*/
     mFood chef;
@@ -360,7 +381,7 @@ int main(){
     init.initializer(&snake);
     view.viewSnake(&snake);
     viewScore.viewColor(scoreOfSnake,&scoreSnake,240);
-
+    viewFood.viewColor(0,&chef,249);
 
     /*Controles*/
     systemMoveSnake control;
@@ -370,7 +391,6 @@ int main(){
 
     while(!gameOver){
 
-        viewFood.viewColor(0,&chef,249);
         viewScore.viewColor(scoreOfSnake,&scoreSnake,240);
 
         tecla = entrada.update();
@@ -378,7 +398,6 @@ int main(){
         if(tecla == 'c'){
             gameOver = true;
         }
-
 
         if(limit.isLimit(&snake)){
             control.moveSnake(tecla,&snake,false,true);
@@ -395,6 +414,8 @@ int main(){
             viewFood.viewColor(0,&chef,249,false);
             generator.resetFood(&chef);
             scoreNum.update(10,0,&scoreSnake);
+            create.createSnakePiece(&snake);
+            viewFood.viewColor(0,&chef,249,true);
         }
 
         if(scoreNum.getPoints() >= winPoints){
